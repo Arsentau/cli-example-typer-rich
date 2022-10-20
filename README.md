@@ -1,0 +1,1 @@
+# cli-example-typer-rich
