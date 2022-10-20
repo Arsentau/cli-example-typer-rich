@@ -1,10 +1,10 @@
 from math import pow
 
-from rich.table import Table
-from rich.style import Style
-from services.api_consumer import Exchange
-from rich.console import Console
 from entities.currencies import Currency, OperationType
+from rich.console import Console
+from rich.style import Style
+from rich.table import Table
+from services.api_consumer import Exchange
 
 
 class Calculator:

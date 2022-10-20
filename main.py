@@ -1,11 +1,10 @@
+from entities.currencies import Currency
 from rich.console import Console
 from rich.progress import track
 from services.api_consumer import Exchange
+from services.calculator import Calculator, CalculatorLogger
 from tables.exchange import exchange_table_gen
 from typer import Typer
-from services.calculator import Calculator, CalculatorLogger
-
-from entities.currencies import Currency
 
 app = Typer()
 
