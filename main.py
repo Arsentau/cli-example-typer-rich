@@ -10,12 +10,19 @@ app = Typer()
 
 
 @app.command()
+def hello(name: str, color: str = "yellow"):
+    """Returns hello + the given name with rich color styling"""
+    console = Console()
+    console.print(f"Hello {name}", style=f"bold {color.lower}")
+
+
+@app.command()
 def currencies(
     euro: bool = True,
     official: bool = True
 ):
-    """This command retrieves the values from an api
-    https://bluelytics.com.ar/#!/api
+    """Retrieves the values from an api
+    https://bluelytics.com.ar/#!/api and render the data in a table using rich.
     """
     exchange = None
     for i in track(range(3), description="Fetching..."):
@@ -45,6 +52,7 @@ def currencies(
 
 @app.command()
 def conversion(json_response: bool = False):
+    """Converts USD and EURO (official and blue) from ARS and to ARS"""
     console = Console()
 
     try:
