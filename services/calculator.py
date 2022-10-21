@@ -1,46 +1,34 @@
 from math import pow
 
 from entities.currencies import Currency, OperationType
-from rich.console import Console
 from rich.style import Style
 from rich.table import Table
-from services.api_consumer import Exchange
+from services.input_wrapper import ConversionParams
 
 
 class Calculator:
     def __init__(
         self,
-        console: Console,
-        from_currency: Currency,
-        to_currency: Currency,
-        amount: float,
-        exchange: Exchange
+        conversion_params: ConversionParams
     ) -> None:
-        self.console = console
-        self.from_currency = from_currency.value
-        self.to_currency = to_currency.value
-        self.amount = amount
-        self._exchange_data: dict = exchange.data
-        self.converted_value = None
-        self._exchange_value = None
+        self.conversion_params = conversion_params
 
     def _get_exchange_value(self) -> None:
-        match self.from_currency:
+        match self.conversion_params.from_currency:
             case Currency.ARS.value:
-                self._exchange_value = pow(
-                    self._exchange_data
-                    .get(self.to_currency)
+                self.conversion_params.exchange = pow(
+                    self.conversion_params.exchange
+                    .get(self.conversion_params.to_currency)
                     .get(OperationType.SELL.value),
                     -1
                 )
             case _:
-                self._exchange_value = self._exchange_data \
-                    .get(self.from_currency) \
-                    .get(OperationType.BUY.value)
+                self.conversion_params.exchange = self.conversion_params.exchange \
+                    .get(self.conversion_params.from_currency).get(OperationType.BUY.value)
 
     def convert(self) -> None:
         self._get_exchange_value()
-        self.converted_value = self.amount * self._exchange_value
+        self.converted_value = self.conversion_params.amount * self.conversion_params.exchange
 
 
 class CalculatorLogger:
@@ -49,7 +37,7 @@ class CalculatorLogger:
         self.logger()
 
     def logger(self) -> None:
-        console = self.calculator.console
+        console = self.calculator.conversion_params.console
 
         table = Table()
         table.add_column(
@@ -73,13 +61,13 @@ class CalculatorLogger:
         )
 
         table.add_row(
-            self.calculator.from_currency.upper(),
-            self.calculator.to_currency.upper(),
+            self.calculator.conversion_params.from_currency.upper(),
+            self.calculator.conversion_params.to_currency.upper(),
 
         )
         table.add_row(
-            str(self.calculator.amount),
-            str(self.calculator.converted_value)
+            str(self.calculator.conversion_params.amount),
+            str("%.2f" % self.calculator.converted_value)
         )
 
         console.print(table)

@@ -12,3 +12,6 @@ class Currency(Enum):
 class OperationType(Enum):
     BUY = "value_buy"
     SELL = "value_sell"
+
+
+CURRENCY_NAMES = [data.name for data in Currency]

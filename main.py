@@ -1,9 +1,9 @@
-from entities.currencies import Currency
 from rich.console import Console
 from rich.progress import track
 from rich.style import errors as rich_style_errors
 from services.api_consumer import Exchange
 from services.calculator import Calculator, CalculatorLogger
+from services.input_wrapper import InputWrapper
 from tables.exchange import exchange_table_gen
 from typer import Typer
 
@@ -20,11 +20,12 @@ def hello(name: str, color: str = "yellow"):
         console.print(f"Hello {name}")
         console.print(f"Invalid color: {color}", style="bold red")
 
+
 @app.command()
 def currencies(
     euro: bool = True,
     official: bool = True
-):
+) -> None:
     """Retrieves the values from an api
     https://bluelytics.com.ar/#!/api and render the data in a table using rich.
     """
@@ -34,13 +35,13 @@ def currencies(
     options = (euro, official)
 
     match options:
-        case (True, False):
+        case(True, False):
             del exchange.data['oficial']
             del exchange.data['oficial_euro']
-        case (False, True):
+        case(False, True):
             del exchange.data['oficial_euro']
             del exchange.data['blue_euro']
-        case (False, False):
+        case(False, False):
             del exchange.data['oficial']
             del exchange.data['oficial_euro']
             del exchange.data['blue_euro']
@@ -48,14 +49,14 @@ def currencies(
     table = exchange_table_gen(exchange.data)
     console = Console()
     console.print(
-        ":heavy_check_mark: :thumbs_up: :tada: :100: Last update: " +
+        ":heavy_check_mark: :thumbs_up: :tada: :100: Last update:",
         exchange.data["last_update"][:-6]
     )
     console.print(table)
 
 
 @app.command()
-def conversion(json_response: bool = False):
+def conversion(json_response: bool = False) -> None:
     """Converts USD and EURO (official and blue) from ARS and to ARS"""
     console = Console()
 
@@ -68,67 +69,9 @@ def conversion(json_response: bool = False):
     if json_response:
         console.print_json(exchange.json_data.content.decode('utf8'))
 
-    amount = 0
-    from_currency = None
-    to_currency = None
-    currency_names = [data.name for data in Currency]
+    input = InputWrapper(exchange, console)
 
-    while (
-        amount == 0 or
-        not from_currency or
-        not to_currency
-    ):
-        if not from_currency:
-            console.print(currency_names)
-            console.print("Original currency", style="bold green")
-            command = input("FROM: ").upper()
-            if len(command.split()) > 1 or not (command in currency_names):
-                console.print(
-                    "Invalid value, please try again",
-                    style="bold red"
-                )
-                continue
-            from_currency = Currency[command]
-            if from_currency is not Currency.ARS:
-                to_currency = Currency.ARS
-
-        if not to_currency:
-            console.print(currency_names)
-            console.print("Destination currency", style="bold green")
-            command = input("TO: ").upper()
-            if (len(command.split()) > 1) or \
-                not (command in currency_names) or \
-                    (command == from_currency):
-                console.print(
-                    "Invalid value, please try again",
-                    style="bold red"
-                )
-                continue
-            to_currency = Currency[command]
-
-        if amount == 0:
-            console.print(
-                "Introduce the amount in "
-                f"{from_currency.name.upper()} to be converted to {to_currency.name.upper()}",
-                style="bold green"
-            )
-            command = input("AMOUNT: ")
-            try:
-                amount = float(command)
-            except ValueError:
-                console.print(
-                    "Invalid value, please try again",
-                    style="bold red"
-                )
-                continue
-        break
-    calculator = Calculator(
-        console=console,
-        from_currency=from_currency,
-        to_currency=to_currency,
-        amount=amount,
-        exchange=exchange
-    )
+    calculator = Calculator(input.wrap())
     calculator.convert()
     CalculatorLogger(calculator)
 
